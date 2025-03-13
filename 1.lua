@@ -17,40 +17,56 @@ end
 
 -- 📌 Fix lỗi kẹt trên cây
 local function FixStuck()
-    local humanoid = char:FindFirstChild("Humanoid")
-    if humanoid then
-        humanoid.Sit = true
-        task.wait(0.2)
-        humanoid.Jump = true
-        task.wait(0.2)
-        humanoid.Sit = false
-    end
+    root.Anchored = true
+    task.wait(0.1)
     root.CFrame = root.CFrame + Vector3.new(0, 5, 0)
     task.wait(0.1)
-    root.CFrame = root.CFrame - Vector3.new(0, 5, 0)
+    root.Anchored = false
 end
 
 -- 📌 Hàm teleport nhanh
 local function TeleportTo(targetPosition)
-    if root then
-        -- Tính toán hướng từ nhân vật đến cây
-        local direction = (targetPosition - root.Position).Unit
-        -- Teleport cách cây 5 stud và nâng cao 5 stud
-        local safePosition = targetPosition + (direction * -5) + Vector3.new(0, 5, 0)
-        
-        -- Đảm bảo không teleport vào vật thể
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-        raycastParams.FilterDescendantsInstances = {char}
-        
-        local raycastResult = workspace:Raycast(safePosition, Vector3.new(0, -10, 0), raycastParams)
-        if raycastResult then
-            safePosition = raycastResult.Position + Vector3.new(0, 3, 0)
-        end
-        
-        root.CFrame = CFrame.new(safePosition)
-        task.wait(0.2)
-        FixStuck()
+    if not root then return end
+
+    -- Tắt vật lý tạm thời
+    root.Anchored = true
+    local humanoid = char:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+        task.wait(0.1)
+    end
+
+    -- Tính toán vị trí an toàn
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {char}
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+    -- Raycast xuống đất từ vị trí mục tiêu
+    local groundRay = workspace:Raycast(
+        targetPosition + Vector3.new(0, 50, 0),  -- Bắt đầu từ trên cao
+        Vector3.new(0, -100, 0),                  -- Hướng ray xuống đất
+        rayParams
+    )
+
+    local safeCFrame
+    if groundRay then
+        safeCFrame = CFrame.new(groundRay.Position + Vector3.new(0, 3, 0))  -- Cách mặt đất 3 stud
+    else
+        safeCFrame = CFrame.new(targetPosition + Vector3.new(0, 3, 0))
+    end
+
+    -- Đóng băng tất cả trục quay và vị trí
+    root.AssemblyLinearVelocity = Vector3.new()
+    root.AssemblyAngularVelocity = Vector3.new()
+    root.CFrame = safeCFrame
+
+    -- Kích hoạt lại vật lý sau 0.5s
+    task.wait(0.5)
+    root.Anchored = false
+
+    -- Reset trạng thái nhân vật
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
     end
 end
 
