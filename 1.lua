@@ -222,4 +222,4 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("🚀 Script auto farm đã chạy! Nhấn X để bật/tắt.")
+print("🚀 sadsadasddasadsa.")
